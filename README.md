@@ -3,6 +3,10 @@ Personal repository for demonstrating automated tests skills
 
 
 
+
+# Random User Documentation
+Below is a complete list of valid path values that can be used with the get_attribute() method, based on the structure returned by the [Random User](https://randomuser.me) API.
+
 🧍 User Attributes (results[<index>])
 | Path     | Description                           |
 | -------- | ------------------------------------- |
