@@ -39,9 +39,6 @@ Adding contact
     Then i input a email and password
     And click submit button
     And i should see the contact list page
-    And i click in add a new contact button
-    When i see the add contact page
-    And i create any number of random contacts:    1
-    And i fill up the form for adding a new contact
-    And click submit button
-    Sleep    10s
+    ${number_contacts}    And i create any number of random contacts:    5
+    And i fill up the form for adding new contacts    ${number_contacts}
+    Sleep    2s

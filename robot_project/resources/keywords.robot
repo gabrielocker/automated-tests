@@ -14,11 +14,19 @@ i create any number of random contacts:
     [Arguments]    ${contacts}
     Instance Randomuser
     ${users}=    Generate Users    ${contacts}
+    RETURN    ${contacts}
 
 i get the attribute of the user:
     [Arguments]    ${requested_argument}
     ${attribute}    Get Attribute    0    ${requested_argument}
     RETURN    ${attribute}
+
+i get the attribute a contact:
+    [Arguments]    ${index_contact}    ${requested_argument}
+    ${attribute}    Get Attribute    ${index_contact}    ${requested_argument}
+    RETURN    ${attribute}
+
+
 
 
 
@@ -29,7 +37,7 @@ click sign up button
     Click Element    id:signup
 
 see the add user page
-    Wait Until Element Is Visible    xpath=//h1[contains(text(), 'Add User')]
+    Wait Until Element Is Visible    xpath=//h1[contains(text(), 'Add User')]    60s
 
 fill up the form for a new user
     ${first_name}=    And i get the attribute of the user:    name.first
@@ -51,7 +59,6 @@ click cancel button
 
 i am on the initial page
     Open Browser    https://thinking-tester-contact-list.herokuapp.com    chrome
-    Sleep    1s
 
 i input a email and password
     ${email}=    And i get the attribute of the user:    email
@@ -61,11 +68,14 @@ i input a email and password
     Input Text    id:password    ${password}
 
 i should see the contact list page
-    Wait Until Element Is Visible    xpath=//h1[contains(text(), 'Contact List')]
+    Wait Until Element Is Visible    xpath=//h1[contains(text(), 'Contact List')]    60
 
 i click in logout
     Wait Until Element Is Visible    id:logout
     Click Element    id:logout
+
+
+
 
 
 
@@ -77,38 +87,51 @@ i click in add a new contact button
 i see the add contact page
     Wait Until Element Is Visible    xpath=//h1[contains(text(), 'Add Contact')]
 
-i fill up the form for adding a new contact
-    ${first_name}=    And i get the attribute of the user:    name.first
-    Input Text    id:firstName    ${first_name}
+i fill up the form for adding new contacts
+    [Arguments]    ${number_contacts}
+    
+    FOR    ${index_contact}    IN RANGE    0    ${number_contacts}
+        
+        i should see the contact list page
+        i click in add a new contact button
+        i see the add contact page
 
-    ${last_name}=    And i get the attribute of the user:    name.last
-    Input Text    id:lastName    ${last_name}
+        ${first_name}=    i get the attribute a contact:     ${index_contact}    name.first
+        Input Text    id:firstName    ${first_name}
 
-    ${date_birth}=    And i get the attribute of the user:    dob.date
-    Log    ${date_birth}[:9]
-    Input Text    id:birthdate    ${date_birth}[:10]
+        ${last_name}=    i get the attribute a contact:     ${index_contact}    name.last
+        Input Text    id:lastName    ${last_name}
 
-    ${email}=    And i get the attribute of the user:    email
-    Input Text    id:email    ${email}
+        ${date_birth}=    i get the attribute a contact:     ${index_contact}    dob.date
+        Log    ${date_birth}[:9]
+        Input Text    id:birthdate    ${date_birth}[:10]
 
-    ${phone}=    And i get the attribute of the user:    phone
-    ${phone_strip}=    Evaluate    re.sub(r'\D', '', '''${phone}''')    re
-    Input Text    id:phone    ${phone_strip}
+        ${email}=    i get the attribute a contact:     ${index_contact}    email
+        Input Text    id:email    ${email}
 
-    ${street_address}=    And i get the attribute of the user:    location.street.name
-    Input Text    id:street1    ${street_address}
+        ${phone}=    i get the attribute a contact:     ${index_contact}    phone
+        ${phone_strip}=    Evaluate    "${phone}".replace('-', '').replace('/', '').replace('X', '').replace('(', '').replace(')', '')
+        Input Text    id:phone    ${phone_strip}
 
-    ${street_address2}=    And i get the attribute of the user:    location.street.number
-    Input Text    id:street2    ${street_address2}
+        ${street_address}=    i get the attribute a contact:     ${index_contact}    location.street.name
+        Input Text    id:street1    ${street_address}
 
-    ${city}=    And i get the attribute of the user:    location.city
-    Input Text    id:city    ${city}
+        ${street_address2}=    i get the attribute a contact:     ${index_contact}    location.street.number
+        Input Text    id:street2    ${street_address2}
 
-    ${state}=    And i get the attribute of the user:    location.state
-    Input Text    id:stateProvince    ${state}
+        ${city}=    i get the attribute a contact:     ${index_contact}    location.city
+        Input Text    id:city    ${city}
 
-    ${postcode}=    And i get the attribute of the user:    location.postcode
-    Input Text    id:postalCode    ${postcode}
+        ${state}=    i get the attribute a contact:     ${index_contact}    location.state
+        Input Text    id:stateProvince    ${state}
 
-    ${country}=    And i get the attribute of the user:    location.country
-    Input Text    id:country    ${country}
+        ${postcode}=    i get the attribute a contact:     ${index_contact}    location.postcode
+        Input Text    id:postalCode    ${postcode}
+
+        ${country}=    i get the attribute a contact:     ${index_contact}    location.country
+        Input Text    id:country    ${country}
+        
+        click submit button
+
+    END
+
