@@ -1,6 +1,13 @@
 *** Settings ***
 Library    SeleniumLibrary
+Library    RequestsLibrary
+Library    String
+
 Library    random_user.py
+Library    api_response_handler.py
+Library    Collections
+
+Resource    variables.robot
 
 
 *** Keywords ***
@@ -58,7 +65,7 @@ click cancel button
     Click Element    id:cancel
 
 i am on the initial page
-    Open Browser    https://thinking-tester-contact-list.herokuapp.com    chrome
+    Open Browser    ${URLAPP}    chrome
 
 i input a email and password
     ${email}=    And i get the attribute of the user:    email
@@ -110,7 +117,7 @@ i fill up the form for adding new contacts
         Input Text    id:email    ${email}
 
         ${phone}=    i get the attribute a contact:     ${index_contact}    phone
-        ${phone_strip}=    Evaluate    "${phone}".replace('-', '').replace('/', '').replace('X', '').replace('(', '').replace(')', '')
+        ${phone_strip}=    Evaluate    "${phone}".replace('-', '').replace('/', '').replace('X', '').replace('C', '').replace('(', '').replace(')', '').replace(' ', '')
         Input Text    id:phone    ${phone_strip}
 
         ${street_address}=    i get the attribute a contact:     ${index_contact}    location.street.name
@@ -135,3 +142,127 @@ i fill up the form for adding new contacts
 
     END
 
+
+
+
+
+############## API METHODS ###################
+
+add user
+    [Arguments]    ${domain_url}    ${endpoint}    ${method}    ${body}
+
+    ${response_new_user}=    call api    ${domain_url}    ${endpoint}    ${method}    ${body}
+
+    Log    ${response_new_user}
+
+    RETURN    ${response_new_user}
+
+
+i login
+    [Arguments]    ${domain_url}    ${endpoint}    ${method}    ${body}    ${password}
+
+    ${email}=    Get Attribute Response    ${body}    user.email
+
+    ${body_login}=    Evaluate    {"email": "${email}", "password": "${password}"}    json
+
+    ${response_login}=    call api    ${domain_url}    ${endpoint}    ${method}    ${body_login}
+
+    Log    ${response_login}
+
+    RETURN    ${response_login}
+
+
+i logout
+    [Arguments]    ${domain_url}    ${endpoint}    ${method}    ${bearer}
+
+    ${bearer_token}=    Get Attribute Response    ${bearer}    token
+
+    ${response_logout}=    call api    ${domain_url}    ${endpoint}    ${method}    ${None}    ${bearer_token}
+
+    RETURN    ${response_logout}
+
+call api
+    [Arguments]    ${domain_url}    ${endpoint}    ${method}    ${body}    ${bearer}=None
+    
+    IF    $bearer == None
+        ${bearer}=    Create Dictionary    Authorization=Bearer {{token}}
+    
+    ELSE
+        ${bearer}=    Create Dictionary    Authorization=Bearer ${bearer}   
+    END
+    
+    Create Session    contact_list    ${URLAPP}
+
+    
+    ${mount_method}=    Catenate    ${method} On Session
+    Log    ${mount_method}
+
+    ${response}=    Run Keyword    ${mount_method}    contact_list    ${endpoint}    json=${body}    headers=${bearer}
+    
+    ${possible_status}=    Set Variable    '200,201'
+
+    Log    ${response.status_code}
+
+    ${status_string}=    Convert To String    ${response.status_code}
+        
+    Should Contain    ${possible_status}    ${status_string}
+    
+    ${content}=    Convert To String    ${response.content}
+    IF    '${content}' != ''
+        RETURN    ${response.json()}
+    ELSE
+        RETURN    vazio
+    END      
+
+
+i mount the body for creating a user
+    ${first_name}=    And i get the attribute of the user:    name.first
+    ${last_name}=    And i get the attribute of the user:    name.last
+    ${email}=    And i get the attribute of the user:    email
+    ${password}=    And i get the attribute of the user:    login.salt
+
+    ${body}=    Evaluate     {"firstName": "${first_name}", "lastName": "${last_name}", "email": "${email}", "password": "${password}"}    json
+
+    Log    ${body}
+    RETURN    ${body}    ${password}
+
+i add any number of contacts
+    [Arguments]    ${number_contacts}    ${domain_url}    ${endpoint}    ${method}    ${bearer}
+    
+    FOR    ${index_contact}    IN RANGE    0    ${number_contacts}
+        
+
+        ${first_name}=    i get the attribute a contact:     ${index_contact}    name.first
+
+        ${last_name}=    i get the attribute a contact:     ${index_contact}    name.last
+
+        ${date_birth}=    i get the attribute a contact:     ${index_contact}    dob.date
+        Log    ${date_birth}[:9]
+
+        ${email}=    i get the attribute a contact:     ${index_contact}    email
+
+        ${phone}=    i get the attribute a contact:     ${index_contact}    phone
+        ${phone_strip}=    Evaluate    "${phone}".replace('-', '').replace('/', '').replace('X', '').replace('C', '').replace('(', '').replace(')', '').replace(' ', '')
+
+        ${street_address}=    i get the attribute a contact:     ${index_contact}    location.street.name
+
+        ${street_address2}=    i get the attribute a contact:     ${index_contact}    location.street.number
+
+        ${city}=    i get the attribute a contact:     ${index_contact}    location.city
+
+        ${state}=    i get the attribute a contact:     ${index_contact}    location.state
+
+        ${postcode}=    i get the attribute a contact:     ${index_contact}    location.postcode
+
+        ${country}=    i get the attribute a contact:     ${index_contact}    location.country
+
+        ${body_contacts}=    Evaluate     {"firstName": "${first_name}", "lastName": "${last_name}","email": "${date_birth}[:9]" , "email": "${email}", "phone": "${phone_strip}", "street1": "${street_address}", "street2": "${street_address2}", "city": "${city}", "stateProvince": "${state}", "postalCode": "${postcode}", "country": "${postcode}"}    json
+        Log    ${body_contacts}
+
+        ${bearer_token}=    Get Attribute Response    ${bearer}    token
+
+        ${response_addcontact}=    call api    ${domain_url}    ${endpoint}    ${method}    ${body_contacts}    ${bearer_token}
+
+    END
+
+    Dictionary Should Contain Sub Dictionary    ${response_addcontact}    ${body_contacts}
