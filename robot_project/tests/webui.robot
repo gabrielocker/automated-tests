@@ -1,6 +1,5 @@
 *** Settings ***
 Resource    ../resources/keywords.robot
-Library    SeleniumLibrary
 
 
 
@@ -39,6 +38,5 @@ Adding contact
     Then i input a email and password
     And click submit button
     And i should see the contact list page
-    ${number_contacts}    And i create any number of random contacts:    5
+    ${number_contacts}=    And i create any number of random contacts:    5
     And i fill up the form for adding new contacts    ${number_contacts}
-    Sleep    2s
