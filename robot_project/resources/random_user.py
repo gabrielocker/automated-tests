@@ -50,19 +50,3 @@ def generate_users(quantity):
 def get_attribute(user_index, path):
     global instance
     return instance.get_attribute(user_index, path)
-
-'''
-if __name__ == "__main__":
-    generator = RandomUserGenerator()
-    generator.generate_users(2)
-
-    # Get first name of the first user
-    print(generator.get_attribute(0, "name.first"))
-
-    # Get country of the second user
-    print(generator.get_attribute(1, "location.country"))
-
-
-    # Get email of the first user
-    print(generator.get_attribute(0, "email"))
-'''
